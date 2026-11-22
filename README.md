@@ -1,85 +1,73 @@
-# Daytray
+<div align="center">
+  <h1>Daytray</h1>
+  <p><strong>A minimal, offline-first taskbar tray flyout for daily to-dos, recurring schedules, and quick notes.</strong></p>
 
-A fast, lightweight desktop taskbar utility for managing your daily to-dos, weekly calendar, flexible recurring schedules, and quick notes — built with **Tauri v2** (~20–40 MB RAM, 100% local & offline).
+  <p>
+    <a href="https://github.com/Harriszed/daytray/releases/latest">
+      <img src="https://img.shields.io/github/v/release/Harriszed/daytray?style=flat-square&color=2563eb" alt="Latest Release" />
+    </a>
+    <a href="https://github.com/Harriszed/daytray/actions/workflows/ci.yml">
+      <img src="https://img.shields.io/github/actions/workflow/status/Harriszed/daytray/ci.yml?style=flat-square&label=CI" alt="CI Status" />
+    </a>
+    <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4?style=flat-square" alt="Windows 10/11" />
+    <img src="https://img.shields.io/badge/built%20with-Tauri%20v2-ffc131?style=flat-square" alt="Built with Tauri v2" />
+    <a href="./LICENSE">
+      <img src="https://img.shields.io/github/license/Harriszed/daytray?style=flat-square" alt="MIT License" />
+    </a>
+  </p>
+</div>
+
+---
+
+<!-- Add a screenshot after your first run:
+<p align="center">
+  <img src="docs/screenshot-dark.png" alt="Daytray Dark Mode" width="680" />
+</p>
+-->
+
+## Why Daytray?
+
+Most to-do apps are either bloated workspace tools or browser tabs you forget to open. **Daytray** sits quietly in your Windows system tray, opens instantly above the taskbar on click (or `Ctrl + Shift + Space`), and disappears the moment you click away.
+
+- **Lightweight:** Built with Tauri v2 (~20–40 MB RAM, zero frontend framework overhead).
+- **100% Local & Private:** Stores everything in a single plain JSON file on your PC. No accounts, no cloud sync, no telemetry.
+- **Fast Entry:** Add a colour-coded or recurring task in under 3 seconds.
 
 ## Features
 
-- **System Tray Flyout:** Lives quietly in your taskbar notification area. Click the tray icon or press `Ctrl + Shift + Space` from anywhere to pop it open above your taskbar; click outside or press `Esc` to dismiss.
-- **Live Tray Counter Badge:** Shows how many tasks remain for today right on the taskbar icon — and flips to a green checkmark when today is clear.
-- **Simple Week & Month Calendar:** Defaults to a compact 7-day strip with colour-coded task dots and expands into a full month grid with one click. Click any date to inspect or add tasks.
-- **Smart Rollover:** Incomplete one-off tasks from earlier days automatically carry forward to **Today** with a subtle `Overdue` badge. Missed recurring tasks never pile up.
-- **Flexible Recurrence Rules:** Daily, specific weekdays (e.g. Mon/Wed/Fri), monthly (with safe end-of-month clamping), every *N* days, or custom repeating ON/OFF rotations (such as `2-2-3` shift patterns) with a 14-day live preview. Skip any single day with one click.
-- **Colour Presets with Custom Labels:** 6 curated theme-tuned colour tags with one-click switching and editable labels.
-- **Slide-out Quick Notes:** One clean, scrollable notepad that slides out to the left of the flyout and auto-saves locally.
-- **Light & Fluent Dark Themes:** Tuned palettes for both Light and Dark mode.
-- **Private & Local-First:** Everything saves atomically to a single local JSON file (`daytray-data.json`) in your OS app data directory. No account, no telemetry, no internet required.
-- **Start with Windows:** Toggle auto-launch on login directly from the tray icon's right-click menu.
+- **System Tray Flyout & Live Counter:** Shows your remaining task count for today right on the taskbar icon—and flips to a green checkmark when today is clear.
+- **Week Strip + Expandable Month Calendar:** Scan your week with colour-coded task dots or expand to the full month grid. Click any day to view or add tasks.
+- **Smart Rollover:** Incomplete one-off tasks automatically carry forward to **Today** with an `Overdue` badge. Missed recurring tasks never pile up into duplicates.
+- **Flexible Recurrence:** Daily, specific weekdays, monthly (with end-of-month clamping), every *N* days, and custom ON/OFF shift rotations (e.g. `2-2-3`) with a 14-day live preview and one-click **Skip**.
+- **Slide-Out Quick Notes:** One clean, auto-saved scratchpad that slides out to the left of the flyout.
+- **Editable Colour Presets:** 6 curated categories tuned for both **Light** and **Fluent Dark** themes.
+- **Start with Windows:** Toggle silent background boot from the tray right-click menu.
 
----
+## Install (Windows)
 
-## Easiest Installation (Windows)
+1. Go to the **[Latest Release](https://github.com/Harriszed/daytray/releases/latest)**.
+2. Download **`Daytray_x.x.x_x64-setup.exe`** (or the `.msi` installer).
+3. Run the installer—Daytray will launch straight into your taskbar tray.
 
-### Option 1: One-Click Installer via GitHub Releases (Recommended)
-Once pushed to GitHub, creating a version tag automatically builds and publishes Windows installers (`.exe` and `.msi`) via GitHub Actions:
-
-1. Push this repo to GitHub.
-2. Tag and push a release:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-3. Wait ~4 minutes for the **Release** workflow in the **Actions** tab to finish.
-4. Download **`Daytray_1.0.0_x64-setup.exe`** from the **Releases** page and run it.
-
-### Option 2: Build the Windows Installer Locally
-**Prerequisites:** [Node.js (LTS)](https://nodejs.org/) and [Rust (rustup)](https://rustup.rs/) with Microsoft C++ Build Tools (Windows 11 already includes WebView2).
-
-- **One-click script:** Double-click `build-windows.bat`
-- **Or via terminal:**
-  ```bash
-  npm install
-  npm run build
-  ```
-Your installers will be output to:
-- `src-tauri/target/release/bundle/nsis/Daytray_1.0.0_x64-setup.exe`
-- `src-tauri/target/release/bundle/msi/Daytray_1.0.0_x64_en-US.msi`
-
----
-
-## Development & Testing
-
-```bash
-# Run core date/recurrence/rollover unit tests (Node 18+)
-npm test
-
-# Launch Daytray in live development mode
-npm install
-npm run dev
-```
-
-You can also open `src/index.html` directly in any browser to inspect UI tweaks quickly (it automatically falls back to `localStorage` when running outside Tauri).
-
----
+> **Windows SmartScreen note:** Because this is an unsigned open-source build, Windows may show a SmartScreen prompt on first launch. Click **More info → Run anyway**, or build from source below.
 
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
 | `Ctrl + Shift + Space` | Toggle Daytray from anywhere |
-| `Esc` | Close open popover / Quick Notes, then hide Daytray |
-| `/` | Focus the quick-add task input |
-| `Enter` | Add task |
+| `Esc` | Close open popover, then dismiss Daytray |
+| `/` | Focus the quick-add input |
+| `Enter` | Save task |
 
----
+## Build From Source
 
-## Data Storage
+**Prerequisites:** [Node.js (LTS)](https://nodejs.org/) and [Rust](https://rustup.rs/) (with Microsoft C++ Build Tools).
 
-Daytray writes all tasks, colour labels, notes, and theme settings to a plain JSON file inside your standard user data directory:
-
-- **Windows:** `%APPDATA%\dev.daytray.app\daytray-data.json`
-
-Right-click the Daytray tray icon and choose **Open Data Folder** to back up or inspect your file anytime.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+```bash
+git clone [https://github.com/](https://github.com/)Harriszed/daytray.git
+cd daytray
+npm test
+npm install
+npm run dev    # run in dev mode
+npm run build  # build Windows .exe & .msi installers
