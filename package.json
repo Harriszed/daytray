@@ -1,0 +1,15 @@
+{
+  "name": "daytray",
+  "version": "1.0.0",
+  "description": "A minimal, lightweight desktop taskbar tray flyout for daily to-dos, flexible recurring schedules, colour-coded calendar tracking, and quick notes.",
+  "license": "MIT",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test": "node --test tests/core.test.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0"
+  }
+}

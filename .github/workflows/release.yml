@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tauri:
+    name: Build & Publish Windows Installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run core tests
+        run: npm test
+
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install Tauri CLI
+        run: npm install
+
+      - name: Build & release installers
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'Daytray v__VERSION__'
+          releaseBody: |
+            ## Daytray v__VERSION__
+
+            Download **`Daytray___VERSION___x64-setup.exe`** below for the fastest one-click Windows installation (or the `.msi` installer).
+
+            ### Highlights
+            - Taskbar tray flyout with live remaining-task badge counter
+            - Week strip + expandable month calendar with colour-coded task dots
+            - Automatic unfinished one-off task rollover (`Overdue`)
+            - Flexible recurring schedules (Daily, Weekdays, Monthly, Every N days, Custom ON/OFF rotations)
+            - Slide-out Quick Notes drawer
+            - Global shortcut (`Ctrl + Shift + Space`) & Start with Windows
+          releaseDraft: false
+          prerelease: false

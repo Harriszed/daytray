@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daytray</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="backdrop" class="stage">
+    <div class="flyout-dock" id="flyoutDock">
+      <!-- Slide-out Quick Notes Card -->
+      <aside class="notes-drawer" id="notesDrawer" aria-label="Quick Notes" aria-hidden="true">
+        <div class="notes-header">
+          <div class="notes-title-group">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
+            <span class="notes-title">Quick Notes</span>
+          </div>
+          <div class="notes-header-right">
+            <span class="notes-status" id="notesStatus">Saved</span>
+            <button class="icon-btn icon-btn-xs" id="closeNotesBtn" title="Close notes" aria-label="Close quick notes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <textarea
+          id="notesTextarea"
+          class="notes-textarea"
+          placeholder="Jot down quick reminders, thoughts, or scratch notes..."
+          spellcheck="true"
+        ></textarea>
+      </aside>
+
+      <!-- Main Flyout Card -->
+      <main class="flyout-panel" id="flyoutPanel" role="dialog" aria-label="Daytray">
+        <!-- Header -->
+        <header class="flyout-header">
+          <div class="header-left">
+            <h1 class="day-heading" id="dayHeading">Today</h1>
+            <span class="date-subtitle" id="dateSubtitle">Sun, 22 Nov</span>
+          </div>
+          <div class="header-actions">
+            <button class="pill-btn hidden" id="todayJumpBtn" title="Jump back to Today">Today</button>
+
+            <button class="icon-btn" id="notesToggleBtn" title="Quick Notes" aria-label="Toggle Quick Notes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="13" y2="17"/>
+              </svg>
+              <span class="notes-dot hidden" id="notesDot"></span>
+            </button>
+
+            <button class="icon-btn" id="labelsToggleBtn" title="Edit colour labels" aria-label="Edit colour labels">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+              </svg>
+            </button>
+
+            <button class="icon-btn" id="themeToggleBtn" title="Switch theme" aria-label="Switch light or dark theme">
+              <svg id="themeIconSun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+              </svg>
+              <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Colour Labels Popover -->
+        <div class="popover labels-popover hidden" id="labelsPopover" role="dialog" aria-label="Colour labels">
+          <div class="popover-header">
+            <span>Colour Labels</span>
+            <button class="icon-btn icon-btn-xs" id="closeLabelsBtn" aria-label="Close colour labels">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="labels-list" id="labelsList"></div>
+        </div>
+
+        <!-- Calendar Card -->
+        <section class="calendar-card" aria-label="Calendar">
+          <div class="calendar-topbar">
+            <div class="cal-nav-group">
+              <button class="icon-btn icon-btn-xs" id="calPrevBtn" title="Previous" aria-label="Previous period">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="cal-month-label" id="calMonthLabel">November 2026</span>
+              <button class="icon-btn icon-btn-xs" id="calNextBtn" title="Next" aria-label="Next period">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <div class="segmented-control" role="tablist" aria-label="Calendar view">
+              <button class="seg-btn active" id="modeWeekBtn" role="tab" aria-selected="true">Week</button>
+              <button class="seg-btn" id="modeMonthBtn" role="tab" aria-selected="false">Month</button>
+            </div>
+          </div>
+
+          <div class="weekday-headers">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <!-- Task Section Header -->
+        <div class="section-bar">
+          <span class="section-title" id="listTitle">To-Do</span>
+          <span class="section-count" id="listCount">0 left</span>
+        </div>
+
+        <!-- Scrollable Task List -->
+        <section class="task-list" id="taskList" aria-label="Tasks"></section>
+
+        <!-- Composer Footer -->
+        <footer class="composer" id="composer">
+          <!-- Repeat Popover (anchored above Repeat button) -->
+          <div class="popover repeat-popover hidden" id="repeatPopover" role="dialog" aria-label="Repeat schedule">
+            <div class="popover-header">
+              <span>Repeat Schedule</span>
+              <button class="icon-btn icon-btn-xs" id="closeRepeatBtn" aria-label="Close repeat menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="repeat-options" id="repeatTypeTabs">
+              <button type="button" class="repeat-chip active" data-type="none">Once</button>
+              <button type="button" class="repeat-chip" data-type="daily">Daily</button>
+              <button type="button" class="repeat-chip" data-type="weekdays">Weekdays</button>
+              <button type="button" class="repeat-chip" data-type="monthly">Monthly</button>
+              <button type="button" class="repeat-chip" data-type="interval">Every N</button>
+              <button type="button" class="repeat-chip" data-type="rotation">Rotation</button>
+            </div>
+
+            <div class="repeat-config" id="repeatConfigArea"></div>
+          </div>
+
+          <form id="taskForm" class="composer-form" autocomplete="off">
+            <div class="composer-input-row">
+              <input
+                type="text"
+                id="taskInput"
+                class="task-input"
+                placeholder="Add a task..."
+                maxlength="140"
+              />
+              <button type="button" class="repeat-trigger" id="repeatTriggerBtn" title="Set repeat schedule">
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                <span id="repeatTriggerLabel">Once</span>
+              </button>
+              <button type="submit" class="add-btn" id="addTaskBtn" title="Add task" aria-label="Add task">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="composer-color-row">
+              <div class="color-swatches" id="colorSwatches" role="radiogroup" aria-label="Task colour"></div>
+              <span class="active-color-pill" id="activeColorPill">Work</span>
+            </div>
+          </form>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
