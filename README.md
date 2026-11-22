@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Daytray</h1>
-  <p><strong>A minimal, offline-first taskbar tray flyout for daily to-dos, recurring schedules, and quick notes.</strong></p>
+  <p><strong>A minimal, offline-first Windows taskbar tray flyout for daily to-dos, recurring schedules, and quick notes.</strong></p>
 
   <p>
     <a href="https://github.com/Harriszed/daytray/releases/latest">
@@ -15,15 +15,13 @@
       <img src="https://img.shields.io/github/license/Harriszed/daytray?style=flat-square" alt="MIT License" />
     </a>
   </p>
+
+  <br />
+
+  <img src="docs/assets/daytray-hero-dark.png" alt="Daytray Fluent Dark Mode with Quick Notes" width="100%" />
 </div>
 
 ---
-
-<!-- Add a screenshot after your first run:
-<p align="center">
-  <img src="docs/screenshot-dark.png" alt="Daytray Dark Mode" width="680" />
-</p>
--->
 
 ## Why Daytray?
 
@@ -33,9 +31,19 @@ Most to-do apps are either bloated workspace tools or browser tabs you forget to
 - **100% Local & Private:** Stores everything in a single plain JSON file on your PC. No accounts, no cloud sync, no telemetry.
 - **Fast Entry:** Add a colour-coded or recurring task in under 3 seconds.
 
+---
+
+## Live Preview
+
+<div align="center">
+  <img src="docs/assets/daytray-demo.gif" alt="Daytray live walkthrough: tray badge, task completion, Quick Notes drawer, Light Mode, and Month calendar" width="760" />
+</div>
+
+---
+
 ## Features
 
-- **System Tray Flyout & Live Counter:** Shows your remaining task count for today right on the taskbar icon—and flips to a green checkmark when today is clear.
+- **System Tray Flyout & Live Counter:** Shows your remaining task count for today right on the taskbar icon — and flips to a green checkmark when today is clear.
 - **Week Strip + Expandable Month Calendar:** Scan your week with colour-coded task dots or expand to the full month grid. Click any day to view or add tasks.
 - **Smart Rollover:** Incomplete one-off tasks automatically carry forward to **Today** with an `Overdue` badge. Missed recurring tasks never pile up into duplicates.
 - **Flexible Recurrence:** Daily, specific weekdays, monthly (with end-of-month clamping), every *N* days, and custom ON/OFF shift rotations (e.g. `2-2-3`) with a 14-day live preview and one-click **Skip**.
@@ -43,13 +51,23 @@ Most to-do apps are either bloated workspace tools or browser tabs you forget to
 - **Editable Colour Presets:** 6 curated categories tuned for both **Light** and **Fluent Dark** themes.
 - **Start with Windows:** Toggle silent background boot from the tray right-click menu.
 
+### Light Mode & Flexible Recurrence
+
+<div align="center">
+  <img src="docs/assets/daytray-light-month.png" alt="Daytray Light Mode with Month Calendar and 2-2-3 Rotation Schedule" width="100%" />
+</div>
+
+---
+
 ## Install (Windows)
 
 1. Go to the **[Latest Release](https://github.com/Harriszed/daytray/releases/latest)**.
 2. Download **`Daytray_x.x.x_x64-setup.exe`** (or the `.msi` installer).
-3. Run the installer—Daytray will launch straight into your taskbar tray.
+3. Run the installer — Daytray will launch straight into your taskbar tray.
 
 > **Windows SmartScreen note:** Because this is an unsigned open-source build, Windows may show a SmartScreen prompt on first launch. Click **More info → Run anyway**, or build from source below.
+
+---
 
 ## Keyboard Shortcuts
 
@@ -60,14 +78,38 @@ Most to-do apps are either bloated workspace tools or browser tabs you forget to
 | `/` | Focus the quick-add input |
 | `Enter` | Save task |
 
+---
+
 ## Build From Source
 
 **Prerequisites:** [Node.js (LTS)](https://nodejs.org/) and [Rust](https://rustup.rs/) (with Microsoft C++ Build Tools).
 
 ```bash
-git clone [https://github.com/](https://github.com/)Harriszed/daytray.git
+git clone [https://github.com/Harriszed/daytray.git](https://github.com/Harriszed/daytray.git)
 cd daytray
 npm test
 npm install
 npm run dev    # run in dev mode
 npm run build  # build Windows .exe & .msi installers
+```
+
+On Windows, you can also double-click `build-windows.bat`.
+
+---
+
+## Local Data Location
+
+All tasks, colour labels, notes, and theme settings are saved atomically to:
+
+```text
+%APPDATA%\dev.daytray.app\daytray-data.json
+```
+
+Right-click the tray icon and select **Open Data Folder** to back up or inspect your data anytime.
+
+---
+
+## Contributing & License
+
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.  
+Released under the [MIT License](./LICENSE).
