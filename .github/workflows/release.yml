@@ -53,6 +53,8 @@ jobs:
             - Automatic unfinished one-off task rollover (`Overdue`)
             - Flexible recurring schedules (Daily, Weekdays, Monthly, Every N days, Custom ON/OFF rotations)
             - Slide-out Quick Notes drawer
+            - **Keep Open mode:** Pin Daytray as a bottom-right corner widget (stays open behind other windows, remembers across restarts)
+            - Zero-flash Dark Mode launch & synced native window theme
             - Global shortcut (`Ctrl + Shift + Space`) & Start with Windows
           releaseDraft: false
           prerelease: false

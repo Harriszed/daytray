@@ -15,6 +15,50 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Fluent Dark Theme (Default) */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-flyout: #1a1e27;
+  --surface-card: #222834;
+  --surface-composer: #222834;
+  --surface-input: #151922;
+  --surface-hover: #2b3242;
+  --surface-popover: #232936;
+  --surface-seg: #171b24;
+  --surface-seg-active: #2c3445;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --shadow-flyout: 0 14px 36px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.34);
+  --shadow-popover: 0 12px 30px rgba(0, 0, 0, 0.56), 0 2px 6px rgba(0, 0, 0, 0.36);
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --accent-soft: rgba(96, 165, 250, 0.16);
+  --accent-text: #93c5fd;
+
+  --overdue-bg: rgba(251, 191, 36, 0.14);
+  --overdue-text: #fcd34d;
+  --overdue-border: rgba(251, 191, 36, 0.28);
+
+  --danger-hover-bg: rgba(248, 113, 113, 0.16);
+  --danger-text: #fca5a5;
+  --check-ink: #0f172a;
+
+  /* Category Colours — Luminous Fluent Dark */
+  --c-blue: #60a5fa;   --c-blue-bg: rgba(96, 165, 250, 0.16);   --c-blue-bd: rgba(96, 165, 250, 0.30);   --c-blue-tx: #93c5fd;
+  --c-purple: #c084fc; --c-purple-bg: rgba(192, 132, 252, 0.16);--c-purple-bd: rgba(192, 132, 252, 0.30);--c-purple-tx: #d8b4fe;
+  --c-green: #34d399;  --c-green-bg: rgba(52, 211, 153, 0.15);  --c-green-bd: rgba(52, 211, 153, 0.28);  --c-green-tx: #6ee7b7;
+  --c-amber: #fbbf24;  --c-amber-bg: rgba(251, 191, 36, 0.15);  --c-amber-bd: rgba(251, 191, 36, 0.28);  --c-amber-tx: #fde68a;
+  --c-rose: #fb7185;   --c-rose-bg: rgba(251, 113, 133, 0.16);  --c-rose-bd: rgba(251, 113, 133, 0.30);  --c-rose-tx: #fda4af;
+  --c-teal: #2dd4bf;   --c-teal-bg: rgba(45, 212, 191, 0.15);   --c-teal-bd: rgba(45, 212, 191, 0.28);   --c-teal-tx: #5eead4;
+}
+
 /* Light Theme */
 [data-theme="light"] {
   color-scheme: light;
@@ -56,49 +100,6 @@
   --c-amber: #f59e0b;  --c-amber-bg: rgba(245, 158, 11, 0.14);  --c-amber-bd: rgba(245, 158, 11, 0.28);  --c-amber-tx: #b45309;
   --c-rose: #f43f5e;   --c-rose-bg: rgba(244, 63, 94, 0.12);    --c-rose-bd: rgba(244, 63, 94, 0.22);    --c-rose-tx: #be123c;
   --c-teal: #14b8a6;   --c-teal-bg: rgba(20, 184, 166, 0.12);   --c-teal-bd: rgba(20, 184, 166, 0.24);   --c-teal-tx: #0f766e;
-}
-
-/* Fluent Dark Theme */
-[data-theme="dark"] {
-  color-scheme: dark;
-  --surface-flyout: #1a1e27;
-  --surface-card: #222834;
-  --surface-composer: #222834;
-  --surface-input: #151922;
-  --surface-hover: #2b3242;
-  --surface-popover: #232936;
-  --surface-seg: #171b24;
-  --surface-seg-active: #2c3445;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --shadow-flyout: 0 14px 36px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.34);
-  --shadow-popover: 0 12px 30px rgba(0, 0, 0, 0.56), 0 2px 6px rgba(0, 0, 0, 0.36);
-
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
-
-  --accent: #60a5fa;
-  --accent-hover: #3b82f6;
-  --accent-soft: rgba(96, 165, 250, 0.16);
-  --accent-text: #93c5fd;
-
-  --overdue-bg: rgba(251, 191, 36, 0.14);
-  --overdue-text: #fcd34d;
-  --overdue-border: rgba(251, 191, 36, 0.28);
-
-  --danger-hover-bg: rgba(248, 113, 113, 0.16);
-  --danger-text: #fca5a5;
-  --check-ink: #0f172a;
-
-  /* Category Colours — Luminous Fluent Dark */
-  --c-blue: #60a5fa;   --c-blue-bg: rgba(96, 165, 250, 0.16);   --c-blue-bd: rgba(96, 165, 250, 0.30);   --c-blue-tx: #93c5fd;
-  --c-purple: #c084fc; --c-purple-bg: rgba(192, 132, 252, 0.16);--c-purple-bd: rgba(192, 132, 252, 0.30);--c-purple-tx: #d8b4fe;
-  --c-green: #34d399;  --c-green-bg: rgba(52, 211, 153, 0.15);  --c-green-bd: rgba(52, 211, 153, 0.28);  --c-green-tx: #6ee7b7;
-  --c-amber: #fbbf24;  --c-amber-bg: rgba(251, 191, 36, 0.15);  --c-amber-bd: rgba(251, 191, 36, 0.28);  --c-amber-tx: #fde68a;
-  --c-rose: #fb7185;   --c-rose-bg: rgba(251, 113, 133, 0.16);  --c-rose-bd: rgba(251, 113, 133, 0.30);  --c-rose-tx: #fda4af;
-  --c-teal: #2dd4bf;   --c-teal-bg: rgba(45, 212, 191, 0.15);   --c-teal-bd: rgba(45, 212, 191, 0.28);   --c-teal-tx: #5eead4;
 }
 
 * {
@@ -330,6 +331,12 @@ html, body {
 .icon-btn-xs svg {
   width: 13px;
   height: 13px;
+}
+
+
+#keepOpenBtn.active svg path {
+  fill: currentColor;
+  fill-opacity: 0.22;
 }
 
 .notes-dot {

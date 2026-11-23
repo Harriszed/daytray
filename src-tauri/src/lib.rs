@@ -1,12 +1,14 @@
 mod storage;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
     menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Manager, PhysicalPosition, WebviewWindow, WindowEvent,
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, Position, Size, Theme,
+    WebviewWindow, WindowEvent, Wry,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::ShortcutState;
@@ -14,27 +16,65 @@ use tauri_plugin_global_shortcut::ShortcutState;
 const TRAY_ID: &str = "main-tray";
 const EDGE_MARGIN_LOGICAL: f64 = 10.0;
 const BLUR_DEBOUNCE_MS: u64 = 250;
+const WIDTH_COMPACT_LOGICAL: f64 = 416.0;
+const WIDTH_EXPANDED_LOGICAL: f64 = 700.0;
+const HEIGHT_LOGICAL: f64 = 644.0;
 
-#[derive(Default)]
-struct FlyoutGuard {
+struct AppState {
+    keep_open: AtomicBool,
+    notes_open: AtomicBool,
+    launched_via_autostart: AtomicBool,
+    ready_completed: AtomicBool,
     last_shown: Mutex<Option<Instant>>,
     last_hidden_by_blur: Mutex<Option<Instant>>,
+    last_blur_when_pinned: Mutex<Option<Instant>>,
+    keep_open_menu: Mutex<Option<CheckMenuItem<Wry>>>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            keep_open: AtomicBool::new(false),
+            notes_open: AtomicBool::new(false),
+            launched_via_autostart: AtomicBool::new(false),
+            ready_completed: AtomicBool::new(false),
+            last_shown: Mutex::new(None),
+            last_hidden_by_blur: Mutex::new(None),
+            last_blur_when_pinned: Mutex::new(None),
+            keep_open_menu: Mutex::new(None),
+        }
+    }
+}
+
+fn is_keep_open(app: &AppHandle) -> bool {
+    app.try_state::<AppState>()
+        .map(|s| s.keep_open.load(Ordering::SeqCst))
+        .unwrap_or(false)
+}
+
+fn is_notes_open(app: &AppHandle) -> bool {
+    app.try_state::<AppState>()
+        .map(|s| s.notes_open.load(Ordering::SeqCst))
+        .unwrap_or(false)
 }
 
 fn mark_shown(app: &AppHandle) {
-    if let Some(guard) = app.try_state::<FlyoutGuard>() {
-        if let Ok(mut lock) = guard.last_shown.lock() {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut lock) = state.last_shown.lock() {
             *lock = Some(Instant::now());
         }
-        if let Ok(mut blur_lock) = guard.last_hidden_by_blur.lock() {
+        if let Ok(mut blur_lock) = state.last_hidden_by_blur.lock() {
             *blur_lock = None;
+        }
+        if let Ok(mut pinned_blur) = state.last_blur_when_pinned.lock() {
+            *pinned_blur = None;
         }
     }
 }
 
 fn recently_shown(app: &AppHandle) -> bool {
-    if let Some(guard) = app.try_state::<FlyoutGuard>() {
-        if let Ok(lock) = guard.last_shown.lock() {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(lock) = state.last_shown.lock() {
             if let Some(ts) = *lock {
                 return ts.elapsed() < Duration::from_millis(BLUR_DEBOUNCE_MS);
             }
@@ -44,16 +84,16 @@ fn recently_shown(app: &AppHandle) -> bool {
 }
 
 fn mark_hidden_by_blur(app: &AppHandle) {
-    if let Some(guard) = app.try_state::<FlyoutGuard>() {
-        if let Ok(mut lock) = guard.last_hidden_by_blur.lock() {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut lock) = state.last_hidden_by_blur.lock() {
             *lock = Some(Instant::now());
         }
     }
 }
 
 fn consume_recent_blur_hide(app: &AppHandle) -> bool {
-    if let Some(guard) = app.try_state::<FlyoutGuard>() {
-        if let Ok(mut lock) = guard.last_hidden_by_blur.lock() {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut lock) = state.last_hidden_by_blur.lock() {
             if let Some(ts) = lock.take() {
                 return ts.elapsed() < Duration::from_millis(BLUR_DEBOUNCE_MS);
             }
@@ -62,31 +102,105 @@ fn consume_recent_blur_hide(app: &AppHandle) -> bool {
     false
 }
 
-fn position_flyout_bottom_right(window: &WebviewWindow) {
+fn mark_blur_when_pinned(app: &AppHandle) {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut lock) = state.last_blur_when_pinned.lock() {
+            *lock = Some(Instant::now());
+        }
+    }
+}
+
+fn consume_recent_pinned_blur(app: &AppHandle) -> bool {
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut lock) = state.last_blur_when_pinned.lock() {
+            if let Some(ts) = lock.take() {
+                return ts.elapsed() < Duration::from_millis(BLUR_DEBOUNCE_MS);
+            }
+        }
+    }
+    false
+}
+
+fn target_logical_width(notes_open: bool) -> f64 {
+    if notes_open {
+        WIDTH_EXPANDED_LOGICAL
+    } else {
+        WIDTH_COMPACT_LOGICAL
+    }
+}
+
+fn sync_window_geometry(window: &WebviewWindow, notes_open: bool) {
+    let logical_w = target_logical_width(notes_open);
+    let _ = window.set_size(Size::Logical(LogicalSize::new(logical_w, HEIGHT_LOGICAL)));
+
     let monitor = window
         .current_monitor()
         .ok()
         .flatten()
         .or_else(|| window.primary_monitor().ok().flatten());
 
-    if let (Some(monitor), Ok(win_size)) = (monitor, window.outer_size()) {
+    if let Some(monitor) = monitor {
         let work_area = monitor.work_area();
         let scale = monitor.scale_factor();
         let margin = (EDGE_MARGIN_LOGICAL * scale).round() as i32;
+        let phys_w = (logical_w * scale).round() as i32;
+        let phys_h = (HEIGHT_LOGICAL * scale).round() as i32;
 
-        let x = work_area.position.x + work_area.size.width as i32 - win_size.width as i32 - margin;
-        let y =
-            work_area.position.y + work_area.size.height as i32 - win_size.height as i32 - margin;
+        let x = work_area.position.x + work_area.size.width as i32 - phys_w - margin;
+        let y = work_area.position.y + work_area.size.height as i32 - phys_h - margin;
 
-        let _ = window.set_position(tauri::Position::Physical(PhysicalPosition::new(x, y)));
+        let _ = window.set_position(Position::Physical(PhysicalPosition::new(x, y)));
     }
+}
+
+fn apply_keep_open_mode(app: &AppHandle, enabled: bool, notify_frontend: bool) {
+    if let Some(state) = app.try_state::<AppState>() {
+        state.keep_open.store(enabled, Ordering::SeqCst);
+        if let Ok(menu_lock) = state.keep_open_menu.lock() {
+            if let Some(item) = menu_lock.as_ref() {
+                let _ = item.set_checked(enabled);
+            }
+        }
+    }
+
+    if let Some(window) = app.get_webview_window("main") {
+        // Keep Open mode behaves as a normal-layer anchored corner widget (not always on top).
+        // Unpinned flyout mode floats above active apps and dismisses on click outside.
+        let _ = window.set_always_on_top(!enabled);
+    }
+
+    if notify_frontend {
+        let _ = app.emit("daytray:keep-open-changed", enabled);
+    }
+}
+
+fn apply_window_theme(window: &WebviewWindow, theme_name: &str) {
+    let native_theme = if theme_name == "light" {
+        Theme::Light
+    } else {
+        Theme::Dark
+    };
+    let _ = window.set_theme(Some(native_theme));
 }
 
 fn show_flyout(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        let pinned = is_keep_open(app);
+        let notes = is_notes_open(app);
+
         mark_shown(app);
-        position_flyout_bottom_right(&window);
+        sync_window_geometry(&window, notes);
         let _ = window.show();
+
+        if pinned {
+            // Pulse always-on-top briefly so Windows reliably raises a buried Keep Open
+            // widget above other apps, then immediately restore normal z-order.
+            let _ = window.set_always_on_top(true);
+            let _ = window.set_always_on_top(false);
+        } else {
+            let _ = window.set_always_on_top(true);
+        }
+
         let _ = window.set_focus();
         let _ = app.emit("daytray:shown", ());
     }
@@ -101,17 +215,80 @@ fn hide_flyout(app: &AppHandle) {
 
 fn toggle_flyout(app: &AppHandle, from_tray_click: bool) {
     if let Some(window) = app.get_webview_window("main") {
-        // On Windows, clicking the tray icon while the flyout is open blurs & hides
+        let pinned = is_keep_open(app);
+        let visible = window.is_visible().unwrap_or(false);
+
+        if pinned {
+            if !visible {
+                show_flyout(app);
+                return;
+            }
+            let focused_now = window.is_focused().unwrap_or(false);
+            let just_blurred_for_tray = from_tray_click && consume_recent_pinned_blur(app);
+
+            // If buried behind another window, bring to front instead of hiding.
+            // If already focused right in front of the user, toggle hidden.
+            if focused_now || just_blurred_for_tray {
+                hide_flyout(app);
+            } else {
+                show_flyout(app);
+            }
+            return;
+        }
+
+        // Unpinned flyout mode: on Windows, clicking the tray icon while open blurs & hides
         // the window milliseconds before the tray click event arrives. Prevent reopen.
         if from_tray_click && consume_recent_blur_hide(app) {
             return;
         }
-        let visible = window.is_visible().unwrap_or(false);
         if visible {
             hide_flyout(app);
         } else {
             show_flyout(app);
         }
+    }
+}
+
+#[tauri::command]
+fn app_ready(app: AppHandle, keep_open: bool, notes_open: bool, theme: String) {
+    let mut autostart = false;
+    if let Some(state) = app.try_state::<AppState>() {
+        state.notes_open.store(notes_open, Ordering::SeqCst);
+        state.ready_completed.store(true, Ordering::SeqCst);
+        autostart = state.launched_via_autostart.load(Ordering::SeqCst);
+    }
+
+    apply_keep_open_mode(&app, keep_open, false);
+
+    if let Some(window) = app.get_webview_window("main") {
+        apply_window_theme(&window, &theme);
+        sync_window_geometry(&window, notes_open);
+
+        if !autostart || keep_open {
+            show_flyout(&app);
+        }
+    }
+}
+
+#[tauri::command]
+fn set_keep_open(app: AppHandle, enabled: bool) {
+    apply_keep_open_mode(&app, enabled, false);
+}
+
+#[tauri::command]
+fn set_notes_open(app: AppHandle, open: bool) {
+    if let Some(state) = app.try_state::<AppState>() {
+        state.notes_open.store(open, Ordering::SeqCst);
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        sync_window_geometry(&window, open);
+    }
+}
+
+#[tauri::command]
+fn set_window_theme(app: AppHandle, theme: String) {
+    if let Some(window) = app.get_webview_window("main") {
+        apply_window_theme(&window, &theme);
     }
 }
 
@@ -167,7 +344,7 @@ fn set_autostart_enabled(app: AppHandle, enabled: bool) -> Result<bool, String> 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(FlyoutGuard::default())
+        .manage(AppState::default())
         // Single-instance plugin MUST be registered first
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_flyout(app);
@@ -180,12 +357,23 @@ pub fn run() {
             storage::load_state,
             storage::save_state,
             storage::open_data_folder,
+            app_ready,
+            set_keep_open,
+            set_notes_open,
+            set_window_theme,
             hide_window,
             update_tray_badge,
             get_autostart_enabled,
             set_autostart_enabled
         ])
         .setup(|app| {
+            let launched_via_autostart = std::env::args().any(|a| a == "--autostart");
+            if let Some(state) = app.try_state::<AppState>() {
+                state
+                    .launched_via_autostart
+                    .store(launched_via_autostart, Ordering::SeqCst);
+            }
+
             // Register global shortcut Ctrl+Shift+Space gracefully without crashing on conflict
             let shortcut_plugin = tauri_plugin_global_shortcut::Builder::new()
                 .with_shortcuts(["CommandOrControl+Shift+Space"])
@@ -214,6 +402,14 @@ pub fn run() {
                 true,
                 None::<&str>,
             )?;
+            let keep_open_item = CheckMenuItem::with_id(
+                app,
+                "keep_open",
+                "Keep Open",
+                true,
+                false,
+                None::<&str>,
+            )?;
             let autostart_item = CheckMenuItem::with_id(
                 app,
                 "autostart",
@@ -227,10 +423,17 @@ pub fn run() {
             let separator = PredefinedMenuItem::separator(app)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit Daytray", true, None::<&str>)?;
 
+            if let Some(state) = app.try_state::<AppState>() {
+                if let Ok(mut lock) = state.keep_open_menu.lock() {
+                    *lock = Some(keep_open_item.clone());
+                }
+            }
+
             let menu = Menu::with_items(
                 app,
                 &[
                     &open_item,
+                    &keep_open_item,
                     &autostart_item,
                     &data_folder_item,
                     &separator,
@@ -251,6 +454,13 @@ pub fn run() {
                 .show_menu_on_left_click(false)
                 .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "open" => show_flyout(app_handle),
+                    "keep_open" => {
+                        let next = !is_keep_open(app_handle);
+                        apply_keep_open_mode(app_handle, next, true);
+                        if next {
+                            show_flyout(app_handle);
+                        }
+                    }
                     "autostart" => {
                         let currently_enabled =
                             app_handle.autolaunch().is_enabled().unwrap_or(false);
@@ -286,14 +496,29 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Position the flyout cleanly above the taskbar.
-            // If launched silently with --autostart, keep it hidden in the tray.
-            let launched_via_autostart = std::env::args().any(|a| a == "--autostart");
+            // Pre-position window offscreen (remains hidden until frontend invokes `app_ready`
+            // so WebView2 never flashes white on launch).
             if let Some(window) = app.get_webview_window("main") {
-                position_flyout_bottom_right(&window);
-                if !launched_via_autostart {
-                    show_flyout(app.handle());
-                }
+                apply_window_theme(&window, "dark");
+                sync_window_geometry(&window, false);
+            }
+
+            // Safety fallback: if normal launch hasn't received app_ready after 1.5s, show anyway.
+            if !launched_via_autostart {
+                let fallback_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(1500));
+                    let already_ready = fallback_handle
+                        .try_state::<AppState>()
+                        .map(|s| s.ready_completed.load(Ordering::SeqCst))
+                        .unwrap_or(false);
+                    if !already_ready {
+                        let main_handle = fallback_handle.clone();
+                        let _ = fallback_handle.run_on_main_thread(move || {
+                            show_flyout(&main_handle);
+                        });
+                    }
+                });
             }
 
             Ok(())
@@ -304,7 +529,10 @@ pub fn run() {
             }
             match event {
                 WindowEvent::Focused(false) => {
-                    if !recently_shown(window.app_handle()) {
+                    if is_keep_open(window.app_handle()) {
+                        // Stay open on screen; only remember blur timestamp for tray-click detection.
+                        mark_blur_when_pinned(window.app_handle());
+                    } else if !recently_shown(window.app_handle()) {
                         mark_hidden_by_blur(window.app_handle());
                         let _ = window.hide();
                         let _ = window.app_handle().emit("daytray:hidden", ());

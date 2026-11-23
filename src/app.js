@@ -39,6 +39,7 @@
     dayHeading: document.getElementById('dayHeading'),
     dateSubtitle: document.getElementById('dateSubtitle'),
     todayJumpBtn: document.getElementById('todayJumpBtn'),
+    keepOpenBtn: document.getElementById('keepOpenBtn'),
     labelsToggleBtn: document.getElementById('labelsToggleBtn'),
     labelsPopover: document.getElementById('labelsPopover'),
     closeLabelsBtn: document.getElementById('closeLabelsBtn'),
@@ -228,6 +229,18 @@
     const isDark = state.theme === 'dark';
     els.themeIconSun.classList.toggle('hidden', !isDark);
     els.themeIconMoon.classList.toggle('hidden', isDark);
+    if (tauriInvoke) {
+      tauriInvoke('set_window_theme', { theme: state.theme }).catch(() => {});
+    }
+  }
+
+  function renderKeepOpen() {
+    const on = Boolean(state.keepOpen);
+    els.keepOpenBtn.classList.toggle('active', on);
+    els.keepOpenBtn.setAttribute('aria-pressed', String(on));
+    els.keepOpenBtn.title = on
+      ? 'Keep open is ON — stays open behind other apps (click to return to flyout mode)'
+      : 'Keep open is OFF — click to keep Daytray open';
   }
 
   function renderNotesDrawer() {
@@ -634,6 +647,7 @@
 
   function renderAll() {
     renderTheme();
+    renderKeepOpen();
     renderNotesDrawer();
     renderHeader();
     renderCalendar();
@@ -707,10 +721,10 @@
      Event Wiring
      ------------------------------------------------------------------------ */
   function bindEvents() {
-    // Clicking the transparent backdrop outside the cards hides the flyout
+    // Clicking the transparent backdrop outside the cards hides the flyout (only when unpinned)
     els.backdrop.addEventListener('mousedown', (e) => {
       if (e.target === els.backdrop || e.target === els.flyoutDock) {
-        if (tauriInvoke) tauriInvoke('hide_window');
+        if (tauriInvoke && !state.keepOpen) tauriInvoke('hide_window');
       }
     });
 
@@ -733,20 +747,43 @@
       }
     });
 
-    // Quick Notes drawer
-    els.notesToggleBtn.addEventListener('click', () => {
-      state.notesOpen = !state.notesOpen;
-      renderNotesDrawer();
-      schedulePersist();
-      if (state.notesOpen) {
-        setTimeout(() => els.notesTextarea.focus(), 160);
+    // Keep Open toggle
+    els.keepOpenBtn.addEventListener('click', () => {
+      state.keepOpen = !state.keepOpen;
+      renderKeepOpen();
+      persistStateNow();
+      if (tauriInvoke) {
+        tauriInvoke('set_keep_open', { enabled: state.keepOpen }).catch(() => {});
       }
     });
 
-    els.closeNotesBtn.addEventListener('click', () => {
-      state.notesOpen = false;
+    function setNotesDrawerOpen(open) {
+      state.notesOpen = open;
+      if (open && tauriInvoke) {
+        // Expand window immediately so the drawer has room to slide out cleanly
+        tauriInvoke('set_notes_open', { open: true }).catch(() => {});
+      }
       renderNotesDrawer();
       schedulePersist();
+      if (open) {
+        setTimeout(() => els.notesTextarea.focus(), 160);
+      } else if (tauriInvoke) {
+        // Shrink window after the 220ms slide-shut transition completes
+        setTimeout(() => {
+          if (!state.notesOpen) {
+            tauriInvoke('set_notes_open', { open: false }).catch(() => {});
+          }
+        }, 230);
+      }
+    }
+
+    // Quick Notes drawer (dynamically resizes native window so no transparent area blocks clicks)
+    els.notesToggleBtn.addEventListener('click', () => {
+      setNotesDrawerOpen(!state.notesOpen);
+    });
+
+    els.closeNotesBtn.addEventListener('click', () => {
+      setNotesDrawerOpen(false);
     });
 
     els.notesTextarea.addEventListener('input', () => {
@@ -873,7 +910,7 @@
           els.notesTextarea.blur();
           return;
         }
-        if (tauriInvoke) tauriInvoke('hide_window');
+        if (tauriInvoke && !state.keepOpen) tauriInvoke('hide_window');
         return;
       }
 
@@ -893,6 +930,11 @@
       tauriListen('daytray:shown', () => {
         syncMidnightIfNeeded();
       });
+      tauriListen('daytray:keep-open-changed', (event) => {
+        state.keepOpen = Boolean(event.payload);
+        renderKeepOpen();
+        persistStateNow();
+      });
     }
     window.addEventListener('focus', syncMidnightIfNeeded);
     setInterval(syncMidnightIfNeeded, 30000);
@@ -905,6 +947,15 @@
     await loadPersistedState();
     bindEvents();
     renderAll();
+    if (tauriInvoke) {
+      requestAnimationFrame(() => {
+        tauriInvoke('app_ready', {
+          keepOpen: Boolean(state.keepOpen),
+          notesOpen: Boolean(state.notesOpen),
+          theme: state.theme
+        }).catch(() => {});
+      });
+    }
   }
 
   init();

@@ -142,3 +142,19 @@ test('sanitizeState recovers gracefully from malformed input', () => {
   assert.equal(clean.tasks[0].id, 'ok');
   assert.equal(clean.colors.length, 6);
 });
+
+test('default state starts in dark mode with keepOpen disabled', () => {
+  const fresh = Core.createDefaultState('2026-11-23');
+  assert.equal(fresh.theme, 'dark');
+  assert.equal(fresh.keepOpen, false);
+});
+
+test('sanitizeState preserves keepOpen boolean and defaults invalid values safely', () => {
+  const pinned = Core.sanitizeState({ keepOpen: true, theme: 'dark', tasks: [] }, '2026-11-23');
+  assert.equal(pinned.keepOpen, true);
+  assert.equal(pinned.theme, 'dark');
+
+  const unpinned = Core.sanitizeState({ keepOpen: false, tasks: [] }, '2026-11-23');
+  assert.equal(unpinned.keepOpen, false);
+  assert.equal(unpinned.theme, 'dark');
+});

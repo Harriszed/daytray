@@ -1,6 +1,6 @@
 [package]
 name = "daytray"
-version = "1.0.0"
+version = "1.1.0"
 description = "Minimal desktop taskbar flyout for daily to-dos, recurring schedules, and quick notes"
 authors = ["Daytray Contributors"]
 license = "MIT"
